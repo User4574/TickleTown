@@ -1,0 +1,73 @@
+#!/usr/bin/env tclsh
+
+source player.tcl
+source town.tcl
+source resources.tcl
+
+proc statusline {player town} {
+  puts -nonewline [$player status]
+  puts -nonewline "  --  "
+  puts [$town status]
+}
+
+proc checkeog {player} {
+  if [$player died] {
+    puts "You lie, exhausted, as the light fades away."
+    puts "Game over."
+    exit
+  }
+}
+
+proc help {} {
+  puts {Available commmands:
+  quit:               quit game
+  help:               show this help
+
+  make power:         make power for the town's supply
+  gather water:       gather water for the town's supply
+  gather food:        gather food for the town's supply
+
+  build house:        build a house in the town which can house people
+
+  hire power maker:   set an unassigned occupant to generate power
+  hire food gatherer: set an unassigned occupant to gather food
+
+  drink:              gather some water for yourself
+  eat:                eat an item from the town's food supply}
+}
+
+set p [player new]
+set t [town new]
+
+while true {
+  statusline $p $t
+  checkeog $p
+
+  set update true
+
+  puts -nonewline ">: "
+  flush stdout
+  gets stdin ent
+
+  switch -nocase $ent {
+    {}             {set update false}
+    quit           exit
+    help           {help; set update false}
+
+    "make power"   {$t crank; $p work 5}
+    "gather water" {$t putfood [water new]}
+    "gather food"  {$t putfood [apples new]; $p work 3}
+
+    "build house"  {$t build house; $p work 15}
+
+    drink          {$p eat [water new]}
+    eat            {$p eat [$t takefood]}
+
+    default        {puts "You consider it deeply, but you're not sure how to $ent."; set update false}
+  }
+
+  if $update {
+    $p update
+    $t update
+  }
+}
